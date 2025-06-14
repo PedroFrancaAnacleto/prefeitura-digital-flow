@@ -15,10 +15,10 @@ import {
 } from 'lucide-react';
 
 interface ProcessDocument {
-  id: string;
+  id?: string;
   name: string;
   type: string;
-  url: string;
+  url?: string;
 }
 
 interface ProcessHistoryItem {
@@ -128,8 +128,8 @@ export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {process.documents.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+            {process.documents.map((doc, index) => (
+              <div key={doc.id || index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center">
                   <FileText className="h-5 w-5 text-blue-600 mr-3" />
                   <div>
