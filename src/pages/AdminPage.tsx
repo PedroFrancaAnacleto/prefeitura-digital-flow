@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import {
@@ -49,15 +48,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { CreateUserForm } from '@/components/admin/CreateUserForm';
 
 // Mock users data
 const MOCK_USERS = [
@@ -97,7 +88,7 @@ const MOCK_TEMPLATES = [
 const AdminPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("users");
-  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
 
   return (
     <AppLayout>
@@ -132,8 +123,8 @@ const AdminPage = () => {
                 <CardTitle>Gerenciar Usuários</CardTitle>
                 <CardDescription>Gerencie os usuários do sistema e suas permissões</CardDescription>
               </div>
-              <Button onClick={() => setShowAddUserDialog(true)}>
-                <UserPlus className="mr-2 h-4 w-4" /> Adicionar Usuário
+              <Button onClick={() => setShowCreateUserDialog(true)}>
+                <UserPlus className="mr-2 h-4 w-4" /> Criar Usuário
               </Button>
             </CardHeader>
             <CardContent>
@@ -370,99 +361,11 @@ const AdminPage = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Add User Dialog */}
-      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adicionar Novo Usuário</DialogTitle>
-            <DialogDescription>
-              Preencha os dados do novo usuário para adicionar ao sistema
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo</Label>
-              <Input id="name" placeholder="Nome do usuário" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="email@prefeitura.gov.br" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="department">Setor</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um setor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administração</SelectItem>
-                    <SelectItem value="legal">Jurídico</SelectItem>
-                    <SelectItem value="finance">Financeiro</SelectItem>
-                    <SelectItem value="works">Obras</SelectItem>
-                    <SelectItem value="environment">Meio Ambiente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Função</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="manager">Gestor</SelectItem>
-                    <SelectItem value="user">Usuário</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label>Permissões</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="perm-1" />
-                  <label htmlFor="perm-1" className="text-sm">Criar processos</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="perm-2" />
-                  <label htmlFor="perm-2" className="text-sm">Assinar documentos</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="perm-3" />
-                  <label htmlFor="perm-3" className="text-sm">Gerenciar usuários</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="perm-4" />
-                  <label htmlFor="perm-4" className="text-sm">Gerenciar publicações</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="perm-5" />
-                  <label htmlFor="perm-5" className="text-sm">Acessar relatórios</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="perm-6" />
-                  <label htmlFor="perm-6" className="text-sm">Acessar administração</label>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" onClick={() => setShowAddUserDialog(false)}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Create User Dialog */}
+      <CreateUserForm 
+        open={showCreateUserDialog} 
+        onOpenChange={setShowCreateUserDialog} 
+      />
     </AppLayout>
   );
 };

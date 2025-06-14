@@ -1,17 +1,31 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { 
-  Send,
-  Check,
-  FileSignature,
-  Printer,
-  Clock,
-  FileText,
-  User,
-  Archive
-} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { 
+  FileText, 
+  Clock, 
+  User, 
+  Calendar,
+  ArrowRight,
+  CheckCircle,
+  Send
+} from 'lucide-react';
+
+interface ProcessDocument {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+}
+
+interface ProcessHistoryItem {
+  date: string;
+  user: string;
+  action: string;
+}
 
 interface Process {
   id: string;
@@ -19,147 +33,143 @@ interface Process {
   number: string;
   createdAt: string;
   department: string;
-  status: 'new' | 'inProgress' | 'completed';
-  description: string;
-  requester: string;
+  status: string;
   priority: string;
-  history: {
-    date: string;
-    user: string;
-    action: string;
-  }[];
-  documents: {
-    name: string;
-    type: string;
-  }[];
+  description: string;
+  documents: ProcessDocument[];
+  history: ProcessHistoryItem[];
 }
 
 interface ProcessDetailProps {
-  process: Process | null;
+  process: Process;
 }
 
 export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
-  if (!process) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500 bg-gray-50 border rounded-md">
-        <FileText size={48} className="mb-4 text-gray-400" />
-        <h3 className="text-lg font-medium mb-2">Nenhum processo selecionado</h3>
-        <p>Selecione um processo da lista para visualizar os detalhes</p>
-      </div>
-    );
-  }
-
-  const getStatusBadge = (status: Process['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Novo</Badge>;
-      case 'inProgress':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Em Análise</Badge>;
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Finalizado</Badge>;
-      default:
-        return null;
+      case 'Novo': return 'bg-blue-100 text-blue-800';
+      case 'Em Análise': return 'bg-yellow-100 text-yellow-800';
+      case 'Pendente': return 'bg-orange-100 text-orange-800';
+      case 'Finalizado': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'Alta': return 'bg-red-100 text-red-800';
+      case 'Média': return 'bg-yellow-100 text-yellow-800';
+      case 'Baixa': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
-    <div className="border rounded-md h-full flex flex-col bg-white">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="border-b p-4">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-medium">{process.title}</h2>
-          {getStatusBadge(process.status)}
-        </div>
-        <div className="flex items-center text-sm text-gray-500">
-          <span className="font-medium mr-1">Processo:</span>
-          <span>{process.number}</span>
-          <span className="mx-2">•</span>
-          <Clock className="h-3 w-3 mr-1" />
-          <span>{process.createdAt}</span>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-4">
-        {/* Process Info */}
-        <div className="mb-6">
-          <h3 className="font-medium text-gray-700 mb-2">Informações</h3>
-          <div className="bg-gray-50 p-3 rounded-md text-sm">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-gray-500">Solicitante</p>
-                <p className="font-medium">{process.requester}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Departamento atual</p>
-                <p className="font-medium">{process.department}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Prioridade</p>
-                <p className="font-medium">{process.priority}</p>
-              </div>
-            </div>
-            <div className="mt-3">
-              <p className="text-gray-500 mb-1">Descrição</p>
-              <p>{process.description}</p>
-            </div>
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-bold text-gray-900">{process.title}</h1>
+          <div className="flex gap-2">
+            <Badge className={getStatusColor(process.status)}>{process.status}</Badge>
+            <Badge className={getPriorityColor(process.priority)}>{process.priority}</Badge>
           </div>
         </div>
-
-        {/* Documents */}
-        <div className="mb-6">
-          <h3 className="font-medium text-gray-700 mb-2">Documentos anexados</h3>
-          <div className="bg-gray-50 rounded-md">
-            {process.documents.map((doc, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border-b last:border-b-0">
-                <div className="flex items-center">
-                  <FileText className="h-4 w-4 text-gray-500 mr-2" />
-                  <span>{doc.name}</span>
-                </div>
-                <Badge variant="outline">{doc.type}</Badge>
-              </div>
-            ))}
+        <p className="text-sm text-gray-600 mb-4">Processo nº {process.number}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="flex items-center text-sm text-gray-600">
+            <Calendar className="h-4 w-4 mr-2" />
+            Criado em {process.createdAt}
           </div>
-        </div>
-
-        {/* History */}
-        <div>
-          <h3 className="font-medium text-gray-700 mb-2">Histórico</h3>
-          <div className="bg-gray-50 rounded-md">
-            {process.history.map((item, index) => (
-              <div key={index} className="p-3 border-b last:border-b-0">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 text-gray-500 mr-2" />
-                    <span className="font-medium">{item.user}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">{item.date}</span>
-                </div>
-                <p className="text-sm">{item.action}</p>
-              </div>
-            ))}
+          <div className="flex items-center text-sm text-gray-600">
+            <User className="h-4 w-4 mr-2" />
+            {process.department}
+          </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="h-4 w-4 mr-2" />
+            Última atualização: hoje
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="border-t p-3 flex gap-2 justify-end">
-        <Button variant="outline" size="sm">
-          <Archive className="h-4 w-4 mr-1" /> Arquivar
+      <div className="flex flex-wrap gap-2">
+        <Button>
+          <Send className="h-4 w-4 mr-2" />
+          Encaminhar
         </Button>
-        <Button variant="outline" size="sm">
-          <Printer className="h-4 w-4 mr-1" /> Imprimir
+        <Button variant="outline">
+          <CheckCircle className="h-4 w-4 mr-2" />
+          Assinar
         </Button>
-        <Button variant="outline" size="sm">
-          <FileSignature className="h-4 w-4 mr-1" /> Assinar
-        </Button>
-        <Button variant="outline" size="sm">
-          <Send className="h-4 w-4 mr-1" /> Encaminhar
-        </Button>
-        <Button size="sm">
-          <Check className="h-4 w-4 mr-1" /> Concluir
+        <Button variant="outline">
+          <FileText className="h-4 w-4 mr-2" />
+          Adicionar Documento
         </Button>
       </div>
+
+      <Separator />
+
+      {/* Description */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Descrição</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700">{process.description}</p>
+        </CardContent>
+      </Card>
+
+      {/* Documents */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Documentos Anexos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {process.documents.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center">
+                  <FileText className="h-5 w-5 text-blue-600 mr-3" />
+                  <div>
+                    <p className="font-medium">{doc.name}</p>
+                    <p className="text-sm text-gray-500">{doc.type}</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm">
+                  Visualizar
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Histórico de Tramitação</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {process.history.map((item, index) => (
+              <div key={index} className="flex items-start">
+                <div className="flex-shrink-0 w-3 h-3 bg-blue-600 rounded-full mt-2 mr-4"></div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{item.action}</p>
+                  <p className="text-sm text-gray-500">
+                    {item.user} • {item.date}
+                  </p>
+                </div>
+                {index < process.history.length - 1 && (
+                  <ArrowRight className="h-4 w-4 text-gray-400 mt-2 ml-4" />
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
