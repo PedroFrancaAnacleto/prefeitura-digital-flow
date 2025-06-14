@@ -56,7 +56,7 @@ export const PersonalInfoFields: React.FC<PersonalInfoFieldsProps> = ({ form }) 
             <FormControl>
               <Input 
                 type="email" 
-                placeholder="usuario@prefeitura.gov.br" 
+                placeholder="exemplo@email.com" 
                 {...field} 
               />
             </FormControl>
