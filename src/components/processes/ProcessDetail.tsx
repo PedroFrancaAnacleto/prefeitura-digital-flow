@@ -15,50 +15,65 @@ import {
 } from 'lucide-react';
 
 interface ProcessDocument {
-  id?: string;
-  name: string;
-  type: string;
-  url?: string;
+  readonly name: string;
+  readonly type: string;
 }
 
 interface ProcessHistoryItem {
-  date: string;
-  user: string;
-  action: string;
+  readonly date: string;
+  readonly user: string;
+  readonly action: string;
 }
 
 interface Process {
-  id: string;
-  title: string;
-  number: string;
-  createdAt: string;
-  department: string;
-  status: string;
-  priority: string;
-  description: string;
-  documents: ProcessDocument[];
-  history: ProcessHistoryItem[];
+  readonly id: string;
+  readonly title: string;
+  readonly number: string;
+  readonly createdAt: string;
+  readonly department: string;
+  readonly status: string;
+  readonly priority: string;
+  readonly description: string;
+  readonly requester: string;
+  readonly documents: readonly ProcessDocument[];
+  readonly history: readonly ProcessHistoryItem[];
 }
 
 interface ProcessDetailProps {
-  process: Process;
+  process: Process | null;
 }
 
 export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
+  if (!process) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">Selecione um processo para ver os detalhes</p>
+      </div>
+    );
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Novo': return 'bg-blue-100 text-blue-800';
-      case 'Em Análise': return 'bg-yellow-100 text-yellow-800';
-      case 'Pendente': return 'bg-orange-100 text-orange-800';
-      case 'Finalizado': return 'bg-green-100 text-green-800';
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'inProgress': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'new': return 'Novo';
+      case 'inProgress': return 'Em Análise';
+      case 'completed': return 'Finalizado';
+      default: return status;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'Alta': return 'bg-red-100 text-red-800';
-      case 'Média': return 'bg-yellow-100 text-yellow-800';
+      case 'Normal': return 'bg-yellow-100 text-yellow-800';
       case 'Baixa': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -71,7 +86,7 @@ export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold text-gray-900">{process.title}</h1>
           <div className="flex gap-2">
-            <Badge className={getStatusColor(process.status)}>{process.status}</Badge>
+            <Badge className={getStatusColor(process.status)}>{getStatusLabel(process.status)}</Badge>
             <Badge className={getPriorityColor(process.priority)}>{process.priority}</Badge>
           </div>
         </div>
@@ -88,7 +103,7 @@ export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <Clock className="h-4 w-4 mr-2" />
-            Última atualização: hoje
+            Requerente: {process.requester}
           </div>
         </div>
       </div>
@@ -129,7 +144,7 @@ export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
         <CardContent>
           <div className="space-y-2">
             {process.documents.map((doc, index) => (
-              <div key={doc.id || index} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center">
                   <FileText className="h-5 w-5 text-blue-600 mr-3" />
                   <div>
