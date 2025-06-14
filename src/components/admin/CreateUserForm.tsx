@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,7 +34,7 @@ import { toast } from 'sonner';
 const createUserSchema = z.object({
   fullName: z.string().min(3, 'Nome completo deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido').endsWith('@prefeitura.gov.br', 'Email deve ser do domínio @prefeitura.gov.br'),
-  phone: z.string().regex(/^55\(\d{2}\)\d{8,9}$/, 'Telefone deve estar no formato 55(DDD)xxxxxxxxx'),
+  phone: z.string().regex(/^55\d{10,11}$/, 'Telefone deve estar no formato 55DDDxxxxxxxx (exemplo: 5511945450387)'),
   cpf: z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, 'CPF deve estar no formato XXX.XXX.XXX-XX'),
   password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
   confirmPassword: z.string(),
@@ -95,14 +94,13 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ open, onOpenChan
   };
 
   const formatPhone = (value: string) => {
+    // Remove todos os caracteres não numéricos
     const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 2) {
-      return `55(${numbers}`;
-    } else if (numbers.length <= 4) {
-      return `55(${numbers.slice(2, 4)}`;
-    } else {
-      return `55(${numbers.slice(2, 4)})${numbers.slice(4, 13)}`;
-    }
+    
+    // Limita a 13 dígitos (55 + DDD + número)
+    const limitedNumbers = numbers.slice(0, 13);
+    
+    return limitedNumbers;
   };
 
   const availablePermissions = [
@@ -167,13 +165,13 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ open, onOpenChan
                     <FormLabel>Telefone *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="55(11)999999999"
+                        placeholder="5511945450387"
                         {...field}
                         onChange={(e) => {
                           const formatted = formatPhone(e.target.value);
                           field.onChange(formatted);
                         }}
-                        maxLength={15}
+                        maxLength={13}
                       />
                     </FormControl>
                     <FormMessage />
