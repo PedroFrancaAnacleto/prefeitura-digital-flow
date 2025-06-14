@@ -73,7 +73,7 @@ export const PersonalInfoFields: React.FC<PersonalInfoFieldsProps> = ({ form }) 
             <FormLabel>Telefone *</FormLabel>
             <FormControl>
               <Input 
-                placeholder="5511945450387"
+                placeholder="Ex: 5511999887766"
                 {...field}
                 onChange={(e) => {
                   const formatted = formatPhone(e.target.value);
