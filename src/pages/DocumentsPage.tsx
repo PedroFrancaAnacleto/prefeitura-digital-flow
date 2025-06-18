@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DocumentCard } from '@/components/documents/DocumentCard';
+import { CreateDocumentDialog } from '@/components/documents/CreateDocumentDialog';
+import { useDocuments } from '@/hooks/useDocuments';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +11,9 @@ import {
   Search, 
   Plus,
   Filter,
-  FolderOpen
+  FolderOpen,
+  Download,
+  Trash2
 } from 'lucide-react';
 import {
   Dialog,
@@ -18,90 +22,84 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-// Mock data
-const MOCK_DOCUMENTS = [
-  {
-    id: '1',
-    title: 'Ofício de solicitação ao Tribunal de Contas',
-    type: 'Ofício',
-    createdAt: '15/08/2023',
-    status: 'pending' as const
-  },
-  {
-    id: '2',
-    title: 'Memorando interno sobre procedimentos administrativos',
-    type: 'Memorando',
-    createdAt: '14/08/2023',
-    status: 'signed' as const
-  },
-  {
-    id: '3',
-    title: 'Circular sobre nova política de atendimento ao público',
-    type: 'Circular',
-    createdAt: '13/08/2023',
-    status: 'signed' as const
-  },
-  {
-    id: '4',
-    title: 'Ofício ao Governo do Estado sobre convênio',
-    type: 'Ofício',
-    createdAt: '12/08/2023',
-    status: 'pending' as const
-  },
-  {
-    id: '5',
-    title: 'Memorando sobre férias coletivas',
-    type: 'Memorando',
-    createdAt: '11/08/2023',
-    status: 'signed' as const
-  },
-  {
-    id: '6',
-    title: 'Circular sobre horário de funcionamento',
-    type: 'Circular',
-    createdAt: '10/08/2023',
-    status: 'pending' as const
-  },
-  {
-    id: '7',
-    title: 'Ofício de resposta ao Ministério Público',
-    type: 'Ofício',
-    createdAt: '09/08/2023',
-    status: 'signed' as const
-  },
-  {
-    id: '8',
-    title: 'Memorando sobre inventário patrimonial',
-    type: 'Memorando',
-    createdAt: '08/08/2023',
-    status: 'pending' as const
-  }
-];
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const DocumentsPage = () => {
+  const { documents, isLoading, fetchDocuments, downloadDocument, deleteDocument } = useDocuments();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedDocument, setSelectedDocument] = useState<typeof MOCK_DOCUMENTS[0] | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<typeof documents[0] | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<typeof documents[0] | null>(null);
 
-  const filteredDocuments = MOCK_DOCUMENTS.filter(doc => {
-    // Filter by search term
+  const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.type.toLowerCase().includes(searchTerm.toLowerCase());
+                         doc.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         doc.document_number.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter by tab
     if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'pending') return matchesSearch && doc.status === 'pending';
-    if (activeTab === 'signed') return matchesSearch && doc.status === 'signed';
+    if (activeTab === 'oficios') return matchesSearch && doc.type === 'Ofício';
+    if (activeTab === 'memorandos') return matchesSearch && doc.type === 'Memorando';
     
     return matchesSearch;
   });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const formatFileSize = (bytes: number) => {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const handleDownload = (document: typeof documents[0]) => {
+    downloadDocument(document);
+  };
+
+  const handleDeleteClick = (document: typeof documents[0]) => {
+    setDocumentToDelete(document);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (documentToDelete) {
+      deleteDocument(documentToDelete);
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Carregando documentos...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="page-title">Documentos</h1>
-        <Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Novo Documento
         </Button>
       </div>
@@ -130,8 +128,8 @@ const DocumentsPage = () => {
         >
           <TabsList className="grid grid-cols-3 w-full md:w-1/3">
             <TabsTrigger value="all">Todos</TabsTrigger>
-            <TabsTrigger value="pending">Pendentes</TabsTrigger>
-            <TabsTrigger value="signed">Assinados</TabsTrigger>
+            <TabsTrigger value="oficios">Ofícios</TabsTrigger>
+            <TabsTrigger value="memorandos">Memorandos</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -139,14 +137,39 @@ const DocumentsPage = () => {
       {filteredDocuments.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDocuments.map((document) => (
-            <DocumentCard
-              key={document.id}
-              title={document.title}
-              type={document.type}
-              createdAt={document.createdAt}
-              status={document.status}
-              onClick={() => setSelectedDocument(document)}
-            />
+            <div key={document.id} className="relative">
+              <DocumentCard
+                title={document.title}
+                type={document.type}
+                createdAt={formatDate(document.created_at)}
+                status="signed"
+                onClick={() => setSelectedDocument(document)}
+              />
+              <div className="absolute top-2 right-2 flex gap-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 bg-white/80 hover:bg-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(document);
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 bg-white/80 hover:bg-white text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(document);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       ) : (
@@ -172,34 +195,63 @@ const DocumentsPage = () => {
           <DialogHeader>
             <DialogTitle>{selectedDocument?.title}</DialogTitle>
             <DialogDescription>
-              {selectedDocument?.type} • {selectedDocument?.createdAt}
+              {selectedDocument?.type} • Nº {selectedDocument?.document_number} • {selectedDocument && formatDate(selectedDocument.created_at)}
             </DialogDescription>
           </DialogHeader>
           <div className="bg-gray-50 p-6 rounded-md text-center">
-            <p className="text-gray-500 mb-2">Pré-visualização do documento</p>
-            <div className="border-2 border-dashed border-gray-300 p-8 rounded-md">
-              <p className="font-medium mb-2">{selectedDocument?.title}</p>
-              <p className="text-sm text-gray-600 mb-6">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce condimentum
-                massa eget tellus facilisis, vel fermentum nibh mollis. Donec bibendum
-                convallis urna, nec accumsan est egestas quis.
-              </p>
-              <p className="text-sm text-gray-600">
-                Proin in sollicitudin risus, non dignissim arcu. Etiam venenatis libero at
-                tellus aliquet, at facilisis nisi facilisis. Aenean tincidunt consequat
-                nisl, non congue felis.
-              </p>
+            <p className="text-gray-500 mb-2">Informações do documento</p>
+            <div className="space-y-2 text-left">
+              <p><strong>Nome do arquivo:</strong> {selectedDocument?.file_name}</p>
+              <p><strong>Tamanho:</strong> {selectedDocument && formatFileSize(selectedDocument.file_size)}</p>
+              <p><strong>Tipo:</strong> {selectedDocument?.type}</p>
+              <p><strong>Número:</strong> {selectedDocument?.document_number}</p>
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline">Editar</Button>
-            <Button>Visualizar Completo</Button>
+            <Button 
+              variant="outline"
+              onClick={() => selectedDocument && handleDownload(selectedDocument)}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Baixar PDF
+            </Button>
+            <Button onClick={() => setSelectedDocument(null)}>
+              Fechar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <CreateDocumentDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onDocumentCreated={fetchDocuments}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o documento "{documentToDelete?.title}"? 
+              Esta ação não pode ser desfeita e o arquivo será permanentemente removido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <div className="fixed bottom-6 right-6">
-        <Button size="icon" className="rounded-full h-12 w-12 shadow-lg">
+        <Button 
+          size="icon" 
+          className="rounded-full h-12 w-12 shadow-lg"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="h-6 w-6" />
         </Button>
       </div>
