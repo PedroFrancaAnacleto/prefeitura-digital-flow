@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProcessList } from '@/components/processes/ProcessList';
 import { ProcessDetail } from '@/components/processes/ProcessDetail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 // Mock data
 const MOCK_PROCESSES = [
@@ -116,6 +117,8 @@ const MOCK_PROCESSES = [
 const ProcessesPage = () => {
   const [activeProcessId, setActiveProcessId] = useState<string | null>(MOCK_PROCESSES[0].id);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showMobileDetail, setShowMobileDetail] = useState(false);
+  const isMobile = useIsMobile();
 
   const filteredProcesses = MOCK_PROCESSES.filter(process =>
     process.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,18 +127,44 @@ const ProcessesPage = () => {
 
   const activeProcess = MOCK_PROCESSES.find(p => p.id === activeProcessId) || null;
 
+  const handleSelectProcess = (id: string) => {
+    setActiveProcessId(id);
+    if (isMobile) {
+      setShowMobileDetail(true);
+    }
+  };
+
+  const handleBackToList = () => {
+    setShowMobileDetail(false);
+  };
+
+  if (isMobile && showMobileDetail) {
+    return (
+      <AppLayout>
+        <ProcessDetail process={activeProcess} onBack={handleBackToList} />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Processos</h1>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" /> Novo Processo
-        </Button>
-      </div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Processos</h1>
+            <p className="text-gray-600 mt-1">Gerencie todos os processos administrativos</p>
+          </div>
+          <Button className="sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" /> 
+            <span className="hidden sm:inline">Novo Processo</span>
+            <span className="sm:hidden">Novo</span>
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 flex flex-col">
-          <div className="mb-4 flex gap-4">
+        {/* Mobile Search */}
+        {isMobile && (
+          <div className="flex gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 -translate-y-1/2" />
               <Input
@@ -145,28 +174,62 @@ const ProcessesPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        <div className={cn(
+          "grid gap-6",
+          isMobile ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"
+        )}>
+          {/* Process List */}
+          <div className={cn(
+            "flex flex-col space-y-4",
+            isMobile ? "col-span-1" : "lg:col-span-1"
+          )}>
+            {!isMobile && (
+              <div className="flex gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 -translate-y-1/2" />
+                  <Input
+                    placeholder="Buscar processos..."
+                    className="pl-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button variant="outline" size="icon">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid grid-cols-4 w-full">
+                <TabsTrigger value="all" className="text-xs sm:text-sm">Todos</TabsTrigger>
+                <TabsTrigger value="new" className="text-xs sm:text-sm">Novos</TabsTrigger>
+                <TabsTrigger value="progress" className="text-xs sm:text-sm">Em Análise</TabsTrigger>
+                <TabsTrigger value="completed" className="text-xs sm:text-sm">Concluídos</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <div className="flex-1 min-h-0">
+              <ProcessList
+                processes={filteredProcesses}
+                activeId={activeProcessId}
+                onSelectProcess={handleSelectProcess}
+              />
+            </div>
           </div>
           
-          <Tabs defaultValue="all" className="mb-4">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              <TabsTrigger value="new">Novos</TabsTrigger>
-              <TabsTrigger value="progress">Em Análise</TabsTrigger>
-              <TabsTrigger value="completed">Concluídos</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="flex-1 min-h-0">
-            <ProcessList
-              processes={filteredProcesses}
-              activeId={activeProcessId}
-              onSelectProcess={setActiveProcessId}
-            />
-          </div>
-        </div>
-        
-        <div className="lg:col-span-2">
-          <ProcessDetail process={activeProcess} />
+          {/* Process Detail - Hidden on mobile */}
+          {!isMobile && (
+            <div className="lg:col-span-2">
+              <ProcessDetail process={activeProcess} />
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>
