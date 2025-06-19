@@ -11,7 +11,8 @@ import {
   Calendar,
   ArrowRight,
   CheckCircle,
-  Send
+  Send,
+  ArrowLeft
 } from 'lucide-react';
 
 interface ProcessDocument {
@@ -41,9 +42,10 @@ interface Process {
 
 interface ProcessDetailProps {
   process: Process | null;
+  onBack?: () => void;
 }
 
-export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
+export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process, onBack }) => {
   if (!process) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -81,6 +83,16 @@ export const ProcessDetail: React.FC<ProcessDetailProps> = ({ process }) => {
 
   return (
     <div className="space-y-6">
+      {/* Mobile Back Button */}
+      {onBack && (
+        <div className="md:hidden">
+          <Button variant="ghost" onClick={onBack} className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <div className="flex items-center justify-between mb-2">
